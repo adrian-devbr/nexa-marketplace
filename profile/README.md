@@ -63,11 +63,3 @@ software, praticar novas tecnologias e evoluir com responsabilidade.
 **Começando. Aprendendo. Construindo. Evoluindo.**
 
 </div>
-
----
-
-### Publicar esta apresentação no perfil
-
-Copie o conteúdo deste arquivo para o `README.md` do repositório especial
-[`adrian-devbr/adrian-devbr`](https://github.com/adrian-devbr/adrian-devbr).
-Esse repositório controla o README que aparece na página inicial do perfil.
