@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title description">
+  <title id="title">Adrian — Programador e Desenvolvedor</title>
+  <desc id="description">Banner azul escuro com formas abstratas em ciano.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1120"/>
+      <stop offset="0.55" stop-color="#172554"/>
+      <stop offset="1" stop-color="#075985"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38bdf8" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#2563eb" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="300" rx="24" fill="url(#background)"/>
+  <circle cx="1040" cy="52" r="210" fill="url(#accent)"/>
+  <circle cx="1120" cy="270" r="155" fill="none" stroke="#38bdf8" stroke-opacity="0.2" stroke-width="2"/>
+  <path d="M780 300 1030 0h90L870 300z" fill="#38bdf8" fill-opacity="0.06"/>
+  <path d="M900 300 1150 0h50L950 300z" fill="#38bdf8" fill-opacity="0.08"/>
+  <text x="92" y="143" fill="#f8fafc" font-family="Segoe UI, Arial, sans-serif" font-size="68" font-weight="700" letter-spacing="5">ADRIAN</text>
+  <rect x="94" y="169" width="76" height="5" rx="2.5" fill="#38bdf8"/>
+  <text x="92" y="219" fill="#cbd5e1" font-family="Segoe UI, Arial, sans-serif" font-size="27">PROGRAMADOR &amp; DESENVOLVEDOR</text>
+  <text x="94" y="258" fill="#7dd3fc" font-family="Segoe UI, Arial, sans-serif" font-size="17" letter-spacing="2">CRIADOR DO NEXA</text>
+</svg>

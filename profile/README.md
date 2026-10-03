@@ -1,13 +1,13 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:111827,50:2563EB,100:06B6D4&height=180&section=header&text=ADRIAN&fontSize=54&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Programador%20%26%20Desenvolvedor&descAlignY=60&descSize=18" width="100%" alt="Banner azul com o nome Adrian e o título Programador e Desenvolvedor" />
+<img src="./assets/profile-banner.svg" width="100%" alt="Banner azul com o nome Adrian e o título Programador e Desenvolvedor" />
 
 ### Desenvolvedor de software • Criador do NEXA
 
 Construo produtos digitais completos, da modelagem do banco à experiência no navegador.
 
 [![GitHub](https://img.shields.io/badge/GitHub-adrian--devbr-111827?style=for-the-badge&logo=github)](https://github.com/adrian-devbr)
-[![NEXA](https://img.shields.io/badge/Projeto em destaque-NEXA-2563EB?style=for-the-badge&logo=rocket)](https://github.com/adrian-devbr/nexa-marketplace)
+**[🚀 Projeto em destaque: NEXA](https://github.com/adrian-devbr/nexa-marketplace)**
 
 **CEO • WebSec Brasil** &nbsp;|&nbsp; **Founder • NEXA**
 
