@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0a10">
+    <title>Notificações | NEXA</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/storage.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/notificacoes.js" defer></script>
+</head>
+<body>
+    <header><nav aria-label="Navegação principal"><a class="logo" href="../index.html">NEXA</a><div class="menu"><a href="../index.html">Início</a><a href="login.html" data-auth-link>Entrar</a></div></nav></header>
+    <main class="pagina-conteudo">
+        <div class="pagina-cabecalho"><h1>Notificações</h1><button type="button" data-read-all>Marcar todas como lidas</button></div>
+        <p data-login-required class="mensagem-pagina" hidden>Entre para ver suas notificações. <a href="login.html">Entrar</a>.</p>
+        <p data-page-error class="mensagem-pagina mensagem-erro" role="status" hidden></p>
+        <div class="lista-notificacoes" data-notifications></div>
+        <p data-empty-notifications hidden>Você ainda não tem notificações.</p>
+    </main>
+    <footer><p>&copy; 2026 NEXA. Todos os direitos reservados.</p></footer>
+</body>
+</html>

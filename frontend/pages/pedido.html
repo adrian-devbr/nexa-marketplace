@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0a10">
+    <title>Detalhes do pedido | NEXA</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/storage.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/pedido.js" defer></script>
+</head>
+<body>
+    <header><nav aria-label="Navegação principal"><a class="logo" href="../index.html">NEXA</a><div class="menu"><a href="../index.html">Início</a><a href="login.html" data-auth-link>Entrar</a></div></nav></header>
+    <main class="pagina-conteudo">
+        <p class="etiqueta">Detalhes do pedido</p>
+        <h1 data-order-title>Carregando pedido...</h1>
+        <p data-login-required class="mensagem-pagina" hidden>Entre para ver este pedido. <a href="login.html">Entrar</a>.</p>
+        <p data-page-error class="mensagem-pagina mensagem-erro" role="status" hidden></p>
+        <section data-order-detail class="pedido-detalhe" hidden>
+            <div data-order-listing></div>
+            <dl data-order-facts></dl>
+            <p data-order-status class="etiqueta"></p>
+            <div class="acoes-pedido" data-order-actions></div>
+            <form data-review-form hidden>
+                <h2>Avaliar a outra pessoa</h2>
+                <label for="review-rating">Nota</label>
+                <select id="review-rating" name="rating" required>
+                    <option value="">Escolha uma nota</option>
+                    <option value="5">★★★★★ — 5</option>
+                    <option value="4">★★★★☆ — 4</option>
+                    <option value="3">★★★☆☆ — 3</option>
+                    <option value="2">★★☆☆☆ — 2</option>
+                    <option value="1">★☆☆☆☆ — 1</option>
+                </select>
+                <label for="review-comment">Comentário</label>
+                <textarea id="review-comment" name="comment" maxlength="1000" rows="4"></textarea>
+                <button type="submit">Enviar avaliação</button>
+            </form>
+        </section>
+    </main>
+    <footer><p>&copy; 2026 NEXA. Todos os direitos reservados.</p></footer>
+</body>
+</html>

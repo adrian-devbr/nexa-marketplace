@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="description"
+        content="Encontre produtos e serviços de qualidade na NEXA. Explore categorias e descubra opções para você."
+    >
+    <meta name="theme-color" content="#0b0a10">
+    <title>NEXA | Produtos e serviços</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/api.js" defer></script>
+    <script src="js/storage.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/favoritos.js" defer></script>
+    <script src="js/script.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav aria-label="Navegação principal">
+            <a class="logo" href="#inicio" aria-label="NEXA — página inicial">NEXA</a>
+
+            <div class="menu">
+                <a href="#inicio" aria-current="page">Início</a>
+                <a href="#destaques">Produtos</a>
+                <a href="#categorias">Serviços</a>
+                <a href="#sobre">Sobre</a>
+                <a href="pages/anunciar.html">Anunciar</a>
+                <a href="pages/painel.html" data-member-link hidden>Painel</a>
+                <a href="pages/perfil.html" data-member-link hidden>Perfil</a>
+                <a href="pages/login.html" data-auth-link>Entrar</a>
+            </div>
+        </nav>
+    </header>
+
+    <main id="inicio">
+        <h1>Encontre o que você precisa.</h1>
+        <p class="introducao">
+            Produtos e serviços de qualidade, tudo em um só lugar.
+            Explore nossas categorias e descubra as melhores opções para você.
+        </p>
+
+        <form class="busca" role="search" aria-label="Buscar produtos e serviços">
+            <input
+                type="search"
+                name="busca"
+                placeholder="O que você procura?"
+                aria-label="O que você procura?"
+            >
+            <button type="submit">Pesquisar</button>
+        </form>
+
+        <section
+            class="categorias"
+            id="categorias"
+            aria-labelledby="titulo-categorias"
+        >
+            <h2 id="titulo-categorias">Categorias</h2>
+
+            <div class="categorias-container" aria-label="Filtrar por categoria">
+                <button
+                    class="categoria"
+                    type="button"
+                    data-filtro="produto"
+                    aria-pressed="false"
+                >
+                    Produtos
+                </button>
+                <button
+                    class="categoria"
+                    type="button"
+                    data-filtro="servico"
+                    aria-pressed="false"
+                >
+                    Serviços
+                </button>
+                <button
+                    class="categoria"
+                    type="button"
+                    data-filtro="todos"
+                    aria-pressed="true"
+                >
+                    Todos
+                </button>
+                <button
+                    class="categoria"
+                    type="button"
+                    data-filtro="salvos"
+                    aria-pressed="false"
+                >
+                    ♥ Salvos
+                </button>
+            </div>
+        </section>
+
+        <section
+            class="destaques"
+            id="destaques"
+            aria-labelledby="titulo-destaques"
+        >
+            <h2 id="titulo-destaques">Destaques</h2>
+
+            <div class="produtos-container">
+            </div>
+
+            <p class="nenhum-resultado" role="status" aria-live="polite" hidden>
+                Ainda não há anúncios publicados. Seja o primeiro a anunciar.
+            </p>
+        </section>
+
+        <section id="sobre" aria-labelledby="titulo-sobre">
+            <h2 id="titulo-sobre">Sobre nós</h2>
+            <p>
+                O NEXA é uma plataforma que conecta você aos melhores produtos
+                e serviços disponíveis no mercado. Nossa missão é facilitar
+                sua vida, oferecendo uma experiência de compra e contratação
+                simples e eficiente.
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NEXA. Todos os direitos reservados.</p>
+    </footer>
+</body>
+</html>

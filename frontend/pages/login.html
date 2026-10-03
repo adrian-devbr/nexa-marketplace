@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0a10">
+    <title>Entrar | NEXA</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/storage.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/conta.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav aria-label="Navegação principal">
+            <a class="logo" href="../index.html">NEXA</a>
+            <div class="menu">
+                <a href="../index.html">Início</a>
+                <a href="../index.html#destaques">Anúncios</a>
+                <a href="cadastro.html">Criar conta</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="pagina-conta">
+        <section class="login-container" aria-labelledby="titulo-login">
+            <h1 id="titulo-login">Entrar na NEXA</h1>
+            <form data-account-form="login">
+                <label for="email">E-mail</label>
+                <input id="email" name="email" type="email" autocomplete="email" required>
+
+                <label for="password">Senha</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                >
+
+                <button type="submit">Entrar</button>
+                <p class="mensagem-pagina" data-form-message role="status" aria-live="polite" hidden></p>
+            </form>
+
+            <p class="link-conta">Ainda não tem uma conta? <a href="cadastro.html">Cadastre-se</a></p>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0a10">
+    <title>Criar conta | NEXA</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/storage.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/conta.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav aria-label="Navegação principal">
+            <a class="logo" href="../index.html">NEXA</a>
+            <div class="menu">
+                <a href="../index.html">Início</a>
+                <a href="login.html">Entrar</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="pagina-conta">
+        <section class="login-container" aria-labelledby="titulo-cadastro">
+            <h1 id="titulo-cadastro">Crie sua conta</h1>
+            <form data-account-form="register">
+                <label for="nome">Nome</label>
+                <input
+                    id="nome"
+                    name="name"
+                    type="text"
+                    autocomplete="name"
+                    maxlength="60"
+                    required
+                >
+
+                <label for="email">E-mail</label>
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    required
+                >
+
+                <label for="password">Senha (mínimo de 8 caracteres)</label>
+                <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required
+                >
+
+                <label for="confirm-password">Confirme a senha</label>
+                <input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    autocomplete="new-password"
+                    minlength="8"
+                    required
+                >
+
+                <button type="submit">Criar conta</button>
+                <p class="mensagem-pagina" data-form-message role="status" aria-live="polite" hidden></p>
+            </form>
+
+            <p class="link-conta">Já tem uma conta? <a href="login.html">Entrar</a></p>
+        </section>
+    </main>
+</body>
+</html>

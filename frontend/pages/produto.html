@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0a10">
+    <title>Detalhes do anúncio | NEXA</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/storage.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/favoritos.js" defer></script>
+    <script src="../js/produto.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav aria-label="Navegação principal">
+            <a class="logo" href="../index.html">NEXA</a>
+            <div class="menu">
+                <a href="../index.html">Início</a>
+                <a href="../index.html#destaques">Anúncios</a>
+                <a href="anunciar.html">Anunciar</a>
+                <a href="login.html" data-auth-link>Entrar</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="pagina-conteudo">
+        <section class="produto-detalhes" aria-labelledby="produto-nome">
+            <div class="produto-imagem">
+                <img id="produto-imagem" alt="" hidden>
+                <span id="produto-icone" class="servico-icone" aria-hidden="true">📦</span>
+            </div>
+
+            <div class="produto-informacoes">
+                <p id="produto-tipo" class="etiqueta"></p>
+                <h1 id="produto-nome">Carregando anúncio...</h1>
+                <p id="produto-descricao"></p>
+                <p id="produto-categoria"></p>
+                <p id="produto-avaliacao"></p>
+                <p id="produto-preco" class="produto-preco"></p>
+                <p id="produto-anunciante" class="anunciante"></p>
+                <div class="acoes-detalhe" data-marketplace-actions hidden>
+                    <button type="button" data-message-seller>Conversar com vendedor</button>
+                    <form data-order-form>
+                        <label for="quantidade-pedido">Quantidade</label>
+                        <input id="quantidade-pedido" name="quantity" type="number" min="1" max="1000" value="1" required>
+                        <button type="submit">Fazer pedido</button>
+                    </form>
+                </div>
+                <p class="mensagem-pagina" data-marketplace-message role="status" hidden></p>
+                <div class="acoes-detalhe">
+                    <button id="favorito-detalhe" class="favorito-detalhe" type="button" hidden></button>
+                    <a class="botao-link" href="../index.html#destaques">Voltar aos anúncios</a>
+                </div>
+            </div>
+        </section>
+        <section class="reviews-section" aria-labelledby="reviews-title">
+            <h2 id="reviews-title">Avaliações do vendedor</h2>
+            <div data-listing-reviews></div>
+        </section>
+        <p id="erro-produto" class="mensagem-pagina" role="status" hidden></p>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NEXA. Todos os direitos reservados.</p>
+    </footer>
+</body>
+</html>

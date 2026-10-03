@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0a10">
+    <title>Mensagens | NEXA</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/storage.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/mensagens.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav aria-label="Navegação principal">
+            <a class="logo" href="../index.html">NEXA</a>
+            <div class="menu">
+                <a href="../index.html">Início</a>
+                <a href="login.html" data-auth-link>Entrar</a>
+            </div>
+        </nav>
+    </header>
+    <main class="pagina-conteudo">
+        <h1>Mensagens</h1>
+        <p data-login-required class="mensagem-pagina" hidden>Entre para acessar suas conversas. <a href="login.html">Entrar</a>.</p>
+        <p data-page-error class="mensagem-pagina mensagem-erro" role="status" hidden></p>
+        <div class="mensagens-layout" data-messaging-app hidden>
+            <aside class="lista-conversas">
+                <h2>Conversas</h2>
+                <div data-conversations></div>
+                <p data-empty-conversations hidden>Você ainda não tem conversas.</p>
+                <details class="usuarios-bloqueados">
+                    <summary>Pessoas bloqueadas</summary>
+                    <div data-blocked-users></div>
+                </details>
+            </aside>
+            <section class="thread" data-thread hidden aria-label="Conversa selecionada">
+                <div data-listing-preview class="anuncio-conversa"></div>
+                <h2 data-thread-title></h2>
+                <div class="thread-actions">
+                    <a data-profile-link class="botao-link botao-secundario">Ver perfil</a>
+                    <button type="button" class="botao-secundario" data-block-user>Bloquear pessoa</button>
+                    <button type="button" class="botao-excluir" data-delete-conversation>Excluir conversa</button>
+                </div>
+                <div class="historico-mensagens" data-message-history aria-live="polite"></div>
+                <form data-message-form class="formulario-mensagem">
+                    <label for="message-body">Sua mensagem</label>
+                    <textarea id="message-body" name="body" maxlength="2000" required></textarea>
+                    <button type="submit">Enviar mensagem</button>
+                </form>
+            </section>
+        </div>
+    </main>
+    <footer><p>&copy; 2026 NEXA. Todos os direitos reservados.</p></footer>
+</body>
+</html>

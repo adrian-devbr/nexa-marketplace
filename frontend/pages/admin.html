@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0a10">
+    <title>Moderação de anúncios | NEXA</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/storage.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/admin.js" defer></script>
+</head>
+<body>
+    <header><nav aria-label="Navegação principal"><a class="logo" href="../index.html">NEXA</a><div class="menu"><a href="../index.html">Início</a><a href="login.html" data-auth-link>Entrar</a></div></nav></header>
+    <main class="pagina-conteudo">
+        <h1>Moderação de anúncios</h1>
+        <p data-access-error class="mensagem-pagina mensagem-erro" hidden></p>
+        <p data-page-error class="mensagem-pagina mensagem-erro" role="status" hidden></p>
+        <div class="lista-pedidos" data-moderation-list></div>
+        <p data-empty-moderation hidden>Nenhum anúncio aguarda análise.</p>
+        <section class="reviews-section" aria-labelledby="reported-reviews-title">
+            <h2 id="reported-reviews-title">Avaliações denunciadas</h2>
+            <div class="lista-pedidos" data-reported-reviews></div>
+            <p data-empty-reviews hidden>Nenhuma avaliação aguarda análise.</p>
+        </section>
+    </main>
+    <footer><p>&copy; 2026 NEXA. Todos os direitos reservados.</p></footer>
+</body>
+</html>

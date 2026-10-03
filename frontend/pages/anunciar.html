@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0a10">
+    <title>Anunciar produto ou serviço | NEXA</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/storage.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/anunciar.js" defer></script>
+</head>
+<body>
+    <header>
+        <nav aria-label="Navegação principal">
+            <a class="logo" href="../index.html">NEXA</a>
+            <div class="menu">
+                <a href="../index.html">Início</a>
+                <a href="../index.html#destaques">Anúncios</a>
+                <a href="login.html" data-auth-link>Entrar</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="pagina-conta">
+        <section class="login-container" aria-labelledby="titulo-anunciar">
+            <h1 id="titulo-anunciar" data-listing-heading>Anuncie na NEXA</h1>
+            <p class="mensagem-pagina" data-auth-required role="status" hidden>
+                Entre na sua conta para publicar um anúncio.
+                <a href="login.html">Entrar</a> ou
+                <a href="cadastro.html">criar uma conta</a>.
+            </p>
+
+            <form class="formulario-anuncio" data-listing-form hidden>
+                <label for="tipo">O que deseja anunciar?</label>
+                <select id="tipo" name="type" required>
+                    <option value="produto">Produto</option>
+                    <option value="servico">Serviço</option>
+                </select>
+
+                <label for="titulo">Nome do anúncio</label>
+                <input id="titulo" name="title" type="text" maxlength="80" required>
+
+                <label for="categoria">Categoria</label>
+                <input
+                    id="categoria"
+                    name="category"
+                    type="text"
+                    maxlength="40"
+                    placeholder="Ex.: Tecnologia, Casa, Áudio"
+                    required
+                >
+
+                <label for="descricao">Descrição</label>
+                <textarea
+                    id="descricao"
+                    name="description"
+                    rows="5"
+                    maxlength="500"
+                    required
+                ></textarea>
+
+                <label for="preco">Preço (R$)</label>
+                <input
+                    id="preco"
+                    name="price"
+                    type="number"
+                    min="0.01"
+                    max="100000000"
+                    step="0.01"
+                    required
+                >
+
+                <label for="imagem">URL da imagem (opcional, HTTPS)</label>
+                <input
+                    id="imagem"
+                    name="image"
+                    type="url"
+                    inputmode="url"
+                    placeholder="https://exemplo.com/imagem.jpg"
+                >
+
+                <button type="submit" data-listing-submit>Salvar anúncio</button>
+                <p class="mensagem-pagina" data-form-message role="status" aria-live="polite" hidden></p>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NEXA. Todos os direitos reservados.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b0a10">
+    <title>Pedidos e vendas | NEXA</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/api.js" defer></script>
+    <script src="../js/storage.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/pedidos.js" defer></script>
+</head>
+<body>
+    <header><nav aria-label="Navegação principal"><a class="logo" href="../index.html">NEXA</a><div class="menu"><a href="../index.html">Início</a><a href="login.html" data-auth-link>Entrar</a></div></nav></header>
+    <main class="pagina-conteudo">
+        <h1>Pedidos e vendas</h1>
+        <p data-login-required class="mensagem-pagina" hidden>Entre para acessar pedidos e vendas. <a href="login.html">Entrar</a>.</p>
+        <p data-page-error class="mensagem-pagina mensagem-erro" role="status" hidden></p>
+        <div class="lista-pedidos" data-orders></div>
+        <p data-empty-orders hidden>Você ainda não tem pedidos ou vendas.</p>
+        <section class="reviews-section" aria-labelledby="payment-history-title">
+            <h2 id="payment-history-title">Histórico financeiro</h2>
+            <div class="lista-pedidos" data-payment-history></div>
+        </section>
+    </main>
+    <footer><p>&copy; 2026 NEXA. Todos os direitos reservados.</p></footer>
+</body>
+</html>
