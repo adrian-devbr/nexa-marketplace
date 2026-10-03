@@ -60,11 +60,17 @@ describe("validação dos pagamentos", () => {
         assert.doesNotThrow(requireSafeProviderToken);
     });
 
-    it("exige token de produção somente no ambiente de produção", () => {
+    it("explica quando o checkout local não tem credenciais", () => {
+        process.env.NODE_ENV = "development";
+        delete process.env.MP_ACCESS_TOKEN;
+        assert.throws(requireSafeProviderToken, /Configure MP_ACCESS_TOKEN/);
+    });
+
+    it("bloqueia pagamentos reais enquanto o repasse de marketplace não estiver integrado", () => {
         process.env.NODE_ENV = "production";
         process.env.MP_ACCESS_TOKEN = "TEST-token";
         assert.throws(requireSafeProviderToken, { status: 503 });
         process.env.MP_ACCESS_TOKEN = "APP_USR-production-token";
-        assert.doesNotThrow(requireSafeProviderToken);
+        assert.throws(requireSafeProviderToken, /repasse ao vendedor/);
     });
 });

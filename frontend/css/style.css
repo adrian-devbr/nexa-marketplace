@@ -1056,6 +1056,48 @@ footer p {
     font-weight: 700;
 }
 
+.faixa-taxa {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 10px;
+    align-items: end;
+}
+
+.faixa-taxa legend {
+    padding: 0 6px;
+    color: var(--accent-light);
+    font-weight: 700;
+}
+
+.faixa-taxa label {
+    display: grid;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.faixa-taxa input {
+    min-width: 0;
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+}
+
+[data-order-history] li {
+    margin: 10px 0;
+    padding: 12px;
+    border-left: 3px solid var(--accent);
+    background: var(--surface-raised);
+}
+
+[data-order-history] time {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
 .pedido-detalhe > .etiqueta {
     margin: 18px 0;
 }
@@ -1218,6 +1260,10 @@ footer p {
 
     .pedido-detalhe dl {
         grid-template-columns: 1fr;
+    }
+
+    .faixa-taxa {
+        grid-template-columns: 1fr 1fr;
     }
 
     .pagina-cabecalho {

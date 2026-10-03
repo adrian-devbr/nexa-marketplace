@@ -17,8 +17,29 @@
         <h1>Moderação de anúncios</h1>
         <p data-access-error class="mensagem-pagina mensagem-erro" hidden></p>
         <p data-page-error class="mensagem-pagina mensagem-erro" role="status" hidden></p>
+        <section class="reviews-section" aria-labelledby="fee-tiers-title">
+            <h2 id="fee-tiers-title">Taxas do NEXA</h2>
+            <p>As taxas são aplicadas ao valor total do pedido e registradas para não alterar pedidos antigos.</p>
+            <p class="mensagem-pagina">
+                A taxa de pagamento é informada pelo Mercado Pago após a transação.
+                O repasse dividido ao vendedor ainda não está configurado.
+            </p>
+            <form data-fee-form>
+                <div class="lista-pedidos" data-fee-tiers></div>
+                <div class="acoes-pedido">
+                    <button type="button" class="botao-secundario" data-add-fee-tier>Adicionar faixa</button>
+                    <button type="submit">Salvar faixas de taxa</button>
+                </div>
+                <p class="mensagem-pagina" data-fee-message role="status" hidden></p>
+            </form>
+        </section>
         <div class="lista-pedidos" data-moderation-list></div>
         <p data-empty-moderation hidden>Nenhum anúncio aguarda análise.</p>
+        <section class="reviews-section" aria-labelledby="reported-listings-title">
+            <h2 id="reported-listings-title">Anúncios denunciados</h2>
+            <div class="lista-pedidos" data-reported-listings></div>
+            <p data-empty-listing-reports hidden>Nenhuma denúncia de anúncio aguarda análise.</p>
+        </section>
         <section class="reviews-section" aria-labelledby="reported-reviews-title">
             <h2 id="reported-reviews-title">Avaliações denunciadas</h2>
             <div class="lista-pedidos" data-reported-reviews></div>

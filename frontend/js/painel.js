@@ -3,6 +3,10 @@
     const mensagemLogin = document.querySelector("[data-login-required]");
     const mensagemVazio = document.querySelector("[data-empty-listings]");
     const mensagemErro = document.querySelector("[data-panel-error]");
+    const mensagemPublicacao = document.querySelector("[data-listing-published]");
+    if (new URLSearchParams(window.location.search).has("publicado") && mensagemPublicacao) {
+        mensagemPublicacao.hidden = false;
+    }
     const session = await window.NEXASessionReady;
 
     function criarTexto(tag, texto, classe) {
@@ -28,7 +32,7 @@
                 const info = document.createElement("div");
                 info.className = "anuncio-gerenciado-info";
                 const statusText = {
-                    pending: "Em análise",
+                    pending: "Aguardando análise",
                     published: "Publicado",
                     rejected: "Recusado",
                     hidden: "Oculto"

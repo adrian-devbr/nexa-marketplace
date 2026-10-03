@@ -52,6 +52,7 @@ router.get("/", asyncRoute(async (request, response) => {
 }));
 
 router.get("/:id", asyncRoute(async (request, response) => {
+    z.string().uuid().parse(request.params.id);
     const result = await pool.query(
         `SELECT ${publicFields} ${joins}
          WHERE l.id = $1 AND l.status = 'published' AND u.blocked_at IS NULL`,
@@ -70,22 +71,22 @@ router.post("/", requireAuth, asyncRoute(async (request, response) => {
     try {
         await client.query("BEGIN");
         const result = await client.query(
-            `INSERT INTO listings (id, owner_id, type, title, category, description, price_cents, image_url)
-             SELECT $1, id, $2, $3, $4, $5, $6, NULLIF($7, '')
+            `INSERT INTO listings (id, owner_id, type, title, category, description, price_cents, image_url, status)
+             SELECT $1, id, $2, $3, $4, $5, $6, NULLIF($7, ''), 'published'
              FROM users WHERE id = $8 AND blocked_at IS NULL
-             RETURNING id`,
+             RETURNING id, status`,
             [id, input.type, input.title, input.category, input.description,
                 Math.round(input.price * 100), input.image ?? "", request.userId]
         );
         if (!result.rowCount) throw new HttpError(401, "Esta conta não está disponível.");
         await notify(client, {
-            userId: request.userId, type: "listing_submitted",
-            title: "Anúncio enviado para análise",
-            body: `Seu anúncio “${input.title}” foi enviado para análise.`,
+            userId: request.userId, type: "listing_published",
+            title: "Anúncio publicado",
+            body: `Seu anúncio “${input.title}” já está publicado.`,
             resourceType: "listing", resourceId: id
         });
         await client.query("COMMIT");
-        response.status(201).json({ id, status: "pending" });
+        response.status(201).json({ id, status: "published" });
     } catch (error) {
         await client.query("ROLLBACK");
         throw error;
@@ -104,6 +105,7 @@ router.get("/mine/list", requireAuth, asyncRoute(async (request, response) => {
 }));
 
 router.put("/:id", requireAuth, asyncRoute(async (request, response) => {
+    z.string().uuid().parse(request.params.id);
     const input = listingInput.parse(request.body);
     const client = await pool.connect();
     try {
@@ -111,7 +113,7 @@ router.put("/:id", requireAuth, asyncRoute(async (request, response) => {
         const result = await client.query(
             `UPDATE listings SET type = $3, title = $4, category = $5,
                     description = $6, price_cents = $7, image_url = NULLIF($8, ''),
-                    status = 'pending', updated_at = NOW()
+                    status = 'published', updated_at = NOW()
              WHERE id = $1 AND owner_id = $2 AND status IN ('published', 'pending', 'rejected')
              RETURNING id`,
             [request.params.id, request.userId, input.type, input.title,
@@ -121,13 +123,13 @@ router.put("/:id", requireAuth, asyncRoute(async (request, response) => {
             throw new HttpError(404, "Anúncio não encontrado ou não pertence a esta conta.");
         }
         await notify(client, {
-            userId: request.userId, type: "listing_submitted",
-            title: "Anúncio enviado para análise",
-            body: `Seu anúncio “${input.title}” foi atualizado e enviado para análise.`,
+            userId: request.userId, type: "listing_published",
+            title: "Anúncio atualizado",
+            body: `Seu anúncio “${input.title}” foi atualizado e continua publicado.`,
             resourceType: "listing", resourceId: result.rows[0].id
         });
         await client.query("COMMIT");
-        response.json({ id: result.rows[0].id, status: "pending" });
+        response.json({ id: result.rows[0].id, status: "published" });
     } catch (error) {
         await client.query("ROLLBACK");
         throw error;
@@ -136,7 +138,58 @@ router.put("/:id", requireAuth, asyncRoute(async (request, response) => {
     }
 }));
 
+router.post("/:id/reports", requireAuth, asyncRoute(async (request, response) => {
+    z.string().uuid().parse(request.params.id);
+    const input = z.object({
+        reason: z.enum(["fraud", "prohibited", "misleading", "duplicate", "other"]),
+        details: z.string().trim().max(500).default("")
+    }).parse(request.body);
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const listing = await client.query(
+            `SELECT id, owner_id, title FROM listings
+             WHERE id = $1 AND status = 'published' FOR UPDATE`,
+            [request.params.id]
+        );
+        if (!listing.rowCount) throw new HttpError(404, "Anúncio não encontrado.");
+        if (listing.rows[0].owner_id === request.userId) {
+            throw new HttpError(400, "Você não pode denunciar seu próprio anúncio.");
+        }
+        const reportId = randomUUID();
+        await client.query(
+            `INSERT INTO listing_reports (id, listing_id, reporter_id, reason, details)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [reportId, listing.rows[0].id, request.userId, input.reason, input.details]
+        );
+        const admins = await client.query(
+            "SELECT id FROM users WHERE role = 'admin' AND blocked_at IS NULL"
+        );
+        for (const admin of admins.rows) {
+            await notify(client, {
+                userId: admin.id,
+                type: "listing_reported",
+                title: "Anúncio denunciado",
+                body: `O anúncio “${listing.rows[0].title}” recebeu uma denúncia.`,
+                resourceType: "listing",
+                resourceId: listing.rows[0].id
+            });
+        }
+        await client.query("COMMIT");
+        response.status(201).json({ id: reportId, status: "open" });
+    } catch (error) {
+        await client.query("ROLLBACK");
+        if (error.code === "23505") {
+            throw new HttpError(409, "Você já denunciou este anúncio.");
+        }
+        throw error;
+    } finally {
+        client.release();
+    }
+}));
+
 router.delete("/:id", requireAuth, asyncRoute(async (request, response) => {
+    z.string().uuid().parse(request.params.id);
     const result = await pool.query(
         `UPDATE listings SET status = 'hidden', updated_at = NOW()
          WHERE id = $1 AND owner_id = $2 AND status IN ('published', 'pending', 'rejected')
@@ -150,6 +203,7 @@ router.delete("/:id", requireAuth, asyncRoute(async (request, response) => {
 }));
 
 router.get("/:id/reviews", asyncRoute(async (request, response) => {
+    z.string().uuid().parse(request.params.id);
     const result = await pool.query(
         `SELECT r.id, r.rating, r.comment, r.created_at AS "createdAt",
                 u.id AS "reviewerId", u.name AS "reviewerName"

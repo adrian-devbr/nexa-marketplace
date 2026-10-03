@@ -9,6 +9,23 @@ const router = Router();
 const routerPublic = Router();
 const API_URL = "https://api.mercadopago.com";
 
+export function providerFeeCents(payment) {
+    if (Array.isArray(payment.fee_details)) {
+        let cents = 0;
+        for (const detail of payment.fee_details) {
+            const amount = Number(detail.amount);
+            if (!Number.isFinite(amount) || amount < 0) return null;
+            cents += Math.round(amount * 100);
+        }
+        return Number.isSafeInteger(cents) ? cents : null;
+    }
+    const netReceived = Number(payment.transaction_details?.net_received_amount);
+    const amount = Number(payment.transaction_amount);
+    if (!Number.isFinite(netReceived) || !Number.isFinite(amount)) return null;
+    const cents = Math.round((amount - netReceived) * 100);
+    return cents >= 0 && Number.isSafeInteger(cents) ? cents : null;
+}
+
 async function requestProvider(url, options) {
     try {
         return await fetch(url, {
@@ -27,18 +44,18 @@ async function requestProvider(url, options) {
 }
 
 export function requireSafeProviderToken() {
+    if (process.env.NODE_ENV === "production") {
+        throw new HttpError(503,
+            "Pagamentos reais permanecem bloqueados até a integração e validação do marketplace com divisão e repasse ao vendedor.");
+    }
     const token = process.env.MP_ACCESS_TOKEN;
     if (!token) {
         throw new HttpError(503, "Configure MP_ACCESS_TOKEN para habilitar pagamentos.");
     }
     const isTestToken = token.startsWith("TEST-");
-    const isProductionToken = token.startsWith("APP_USR-");
-    if ((process.env.NODE_ENV === "production" && !isProductionToken) ||
-        (process.env.NODE_ENV !== "production" && !isTestToken)) {
+    if (!isTestToken) {
         throw new HttpError(503,
-            process.env.NODE_ENV === "production"
-                ? "O ambiente de produção exige credenciais APP_USR- do Mercado Pago."
-                : "O ambiente de desenvolvimento aceita somente credenciais de teste TEST- do Mercado Pago.");
+            "O ambiente local aceita somente credenciais de teste TEST- do Mercado Pago.");
     }
 }
 
@@ -92,8 +109,9 @@ routerPublic.post("/webhook", asyncRoute(async (request, response) => {
         }
         const payment = await providerResponse.json();
         const stored = await client.query(
-            `SELECT p.id, p.amount_cents, o.id AS order_id, o.buyer_id, o.seller_id,
-                    o.status AS order_status, l.title
+            `SELECT p.id, p.amount_cents, p.status AS payment_status,
+                    o.id AS order_id, o.buyer_id, o.seller_id, o.status AS order_status,
+                    o.platform_fee_cents, l.title
              FROM payments p JOIN orders o ON o.id = p.order_id
              JOIN listings l ON l.id = o.listing_id
              WHERE p.order_id = $1 FOR UPDATE OF p, o`,
@@ -116,30 +134,79 @@ routerPublic.post("/webhook", asyncRoute(async (request, response) => {
             refunded: "refunded",
             charged_back: "refunded"
         }[payment.status] ?? "pending";
+        const statusChanged = mappedStatus !== row.payment_status;
+        const actualProviderFee = mappedStatus === "approved"
+            ? providerFeeCents(payment)
+            : null;
         await client.query(
             `UPDATE payments SET provider_payment_id = $2, status = $3, updated_at = NOW()
              WHERE id = $1`,
             [row.id, String(payment.id), mappedStatus]
         );
-        if (mappedStatus === "approved" && row.order_status === "accepted") {
+        if (statusChanged && mappedStatus !== "approved") {
             await client.query(
-                "UPDATE orders SET status = 'in_progress', updated_at = NOW() WHERE id = $1",
-                [row.order_id]
+                `INSERT INTO order_status_history (id, order_id, status, details)
+                 VALUES ($1, $2, $3, $4)`,
+                [
+                    randomUUID(),
+                    row.order_id,
+                    `payment_${mappedStatus}`,
+                    `O Mercado Pago informou o status de pagamento: ${mappedStatus}.`
+                ]
             );
         }
-        const notificationTitle = mappedStatus === "approved"
-            ? "Pagamento confirmado"
-            : "Pagamento atualizado";
-        const notificationBody = mappedStatus === "approved"
-            ? `O pagamento do pedido “${row.title}” foi confirmado.`
-            : `O pagamento do pedido “${row.title}” está ${mappedStatus}.`;
-        for (const userId of [row.buyer_id, row.seller_id]) {
-            await notify(client, {
-                userId, type: "payment_updated",
-                title: notificationTitle,
-                body: notificationBody,
-                resourceType: "order", resourceId: row.order_id
-            });
+        if (mappedStatus === "approved") {
+            await client.query(
+                `UPDATE orders
+                 SET provider_fee_cents = $2,
+                     seller_net_cents = CASE
+                         WHEN $2::bigint IS NULL OR total_cents < platform_fee_cents + $2::bigint
+                         THEN NULL
+                         ELSE total_cents - platform_fee_cents - $2::bigint
+                     END,
+                     updated_at = NOW()
+                 WHERE id = $1`,
+                [row.order_id, actualProviderFee]
+            );
+        }
+        if (mappedStatus === "approved" && row.order_status === "accepted") {
+            await client.query(
+                "UPDATE orders SET status = 'paid', updated_at = NOW() WHERE id = $1",
+                [row.order_id]
+            );
+            await client.query(
+                `INSERT INTO order_status_history (id, order_id, status, details)
+                 VALUES ($1, $2, 'paid', 'Pagamento confirmado pelo Mercado Pago.')`,
+                [randomUUID(), row.order_id]
+            );
+        } else if (statusChanged && mappedStatus === "approved") {
+            await client.query(
+                `INSERT INTO order_status_history (id, order_id, status, details)
+                 VALUES ($1, $2, 'payment_approved', $3)`,
+                [
+                    randomUUID(),
+                    row.order_id,
+                    "Pagamento confirmado após o pedido já ter sido cancelado ou alterado; requer análise."
+                ]
+            );
+        }
+        if (statusChanged) {
+            const notificationTitle = mappedStatus === "approved"
+                ? "Pagamento confirmado"
+                : "Pagamento atualizado";
+            const notificationBody = mappedStatus === "approved"
+                ? row.order_status === "accepted"
+                    ? "O Mercado Pago confirmou o pagamento. O vendedor já pode iniciar a entrega."
+                    : "O Mercado Pago confirmou o pagamento, mas o pedido não está aguardando pagamento. A equipe precisa analisar a transação."
+                : `O pagamento está ${mappedStatus}.`;
+            for (const userId of [row.buyer_id, row.seller_id]) {
+                await notify(client, {
+                    userId, type: "payment_updated",
+                    title: notificationTitle,
+                    body: notificationBody,
+                    resourceType: "order", resourceId: row.order_id
+                });
+            }
         }
         await client.query("COMMIT");
         response.status(200).json({ received: true });
@@ -158,6 +225,10 @@ router.get("/history", asyncRoute(async (request, response) => {
                 p.status AS "paymentStatus", p.amount_cents / 100.0 AS amount,
                 p.created_at AS "createdAt", o.id AS "orderId",
                 o.order_number AS "orderNumber", l.title AS "listingTitle",
+                o.platform_fee_rate_basis_points / 100.0 AS "platformFeeRate",
+                o.platform_fee_cents / 100.0 AS "platformFee",
+                o.provider_fee_cents / 100.0 AS "providerFee",
+                o.seller_net_cents / 100.0 AS "sellerNet",
                 CASE WHEN o.buyer_id = $1 THEN 'purchase' ELSE 'sale' END AS direction
          FROM payments p JOIN orders o ON o.id = p.order_id
          JOIN listings l ON l.id = o.listing_id

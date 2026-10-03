@@ -19,15 +19,19 @@ com vendedores, acompanha pedidos e avalia a experiência.
 ## Funcionalidades
 
 - Cadastro e login com senhas protegidas por bcrypt e sessão em cookie HttpOnly.
-- Anúncios de produtos e serviços, com aprovação antes da publicação.
+- Anúncios de produtos e serviços publicados imediatamente, com validação de
+  entrada e moderação posterior por denúncias.
 - Mensagens associadas a anúncios, histórico, leitura, bloqueio e limites de envio.
 - Central de notificações para mensagens, pedidos, avaliações e anúncios.
 - Pedidos com preço e quantidade calculados e registrados no servidor.
-- Fluxo de status de pedidos com verificações de comprador e vendedor.
+- Histórico de status do pedido, da espera pelo vendedor até a conclusão.
+- Faixas de comissão configuráveis pelo administrador e gravadas como snapshot
+  financeiro em cada novo pedido.
 - Avaliações de 1 a 5 estrelas após a conclusão do pedido.
-- Painel de moderação para aprovar anúncios e revisar avaliações denunciadas.
+- Painel para revisar denúncias de anúncios e avaliações e configurar taxas.
 - Checkout hospedado do Mercado Pago, preparado para credenciais de teste e
-  confirmação de pagamento pelo webhook assinado.
+  confirmação de pagamento pelo webhook assinado. A cobrança só fica disponível
+  depois que o vendedor aceita o pedido.
 
 ## Tecnologias
 
@@ -63,8 +67,24 @@ com vendedores, acompanha pedidos e avalia a experiência.
    npm run dev
    ```
 
-4. Acesse `http://localhost:3000`, crie a conta com o e-mail de moderador e
-   aprove os anúncios na página **Moderação**.
+4. Acesse `http://localhost:3000`, crie a conta usando o e-mail configurado como
+   moderador. Os anúncios são publicados no envio; denúncias posteriores podem
+   ser revisadas na página **Moderação**.
+
+Para ativar o checkout local, preencha `MP_ACCESS_TOKEN` com uma credencial
+`TEST-` do Mercado Pago e configure `MP_WEBHOOK_SECRET` e `APP_BASE_URL` no
+arquivo local `backend/.env`. Sem essas credenciais, os pedidos funcionam, mas
+o checkout informa que os pagamentos não estão configurados.
+Para preencher os segredos sem exibi-los no terminal, use
+`.\configurar-pagamentos.ps1` dentro da pasta `backend`; ele exige uma URL HTTPS
+pública (por exemplo, um túnel local) para receber o webhook. Cadastre a URL
+`/api/payments/webhook` e a assinatura secreta correspondente no painel do
+Mercado Pago. Reinicie o servidor depois de salvar.
+
+Na página **Moderação**, um administrador pode ajustar as faixas da taxa NEXA.
+Os valores aplicados ficam registrados no pedido e não mudam quando uma faixa
+for alterada depois. As faixas iniciais são 10% até R$ 50, 8% até R$ 200, 6%
+até R$ 500, 5% até R$ 1.000 e 4% acima disso.
 
 ## Testes
 
@@ -75,16 +95,27 @@ npm test
 
 ## Pagamentos e limites do protótipo
 
-O pagamento é feito em uma página hospedada pelo provedor: o NEXA não recebe nem
-armazena dados de cartão. O checkout fica desativado até configurar credenciais
-de teste `TEST-` do Mercado Pago e o segredo do webhook no `.env`. O servidor
-confirma o pagamento junto ao provedor; a tela do navegador não pode declará-lo
-pago.
+O pedido segue este fluxo: comprador solicita → vendedor aceita ou recusa →
+comprador paga no checkout hospedado → webhook assinado confirma com o Mercado
+Pago → vendedor inicia a entrega. O NEXA não recebe nem armazena dados de cartão.
+O valor anunciado permanece o total cobrado do comprador. A taxa NEXA é
+calculada no backend no momento do pedido; a tarifa do Mercado Pago é registrada
+quando retornada pelo provedor após o pagamento. A tela do navegador não pode
+declarar um pagamento como aprovado.
+
+O saldo líquido apresentado é um cálculo financeiro de referência. **O
+repasse dividido/automático ao vendedor ainda não está integrado**; não se deve
+interpretar o valor como dinheiro já retido ou transferido. Para isso, ainda
+são necessárias contas de vendedor e a integração de marketplace apropriada do
+Mercado Pago.
 
 **Este projeto ainda não está pronto para processar dinheiro real ou para
-lançamento público.** Split de pagamentos e taxas, saques, custódia, reembolsos
-operacionais, revisão legal/fiscal, infraestrutura HTTPS de produção e outras
-medidas operacionais ainda precisam ser projetadas e revisadas.
+lançamento público.** O backend bloqueia intencionalmente cobranças reais até a
+integração de marketplace e repasses estar implementada e validada. Ainda faltam
+credenciais e webhook público do Mercado Pago, regras operacionais para
+reembolsos e disputas, revisão legal/fiscal, banco e hospedagem de produção com
+HTTPS, monitoramento e procedimentos de suporte. Não use credenciais de teste
+para cobrar usuários reais.
 
 ## Estrutura
 

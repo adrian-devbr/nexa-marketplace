@@ -45,9 +45,23 @@
                     <form data-order-form>
                         <label for="quantidade-pedido">Quantidade</label>
                         <input id="quantidade-pedido" name="quantity" type="number" min="1" max="1000" value="1" required>
-                        <button type="submit">Fazer pedido</button>
+                        <button type="submit">Comprar / Contratar</button>
                     </form>
+                    <button type="button" class="botao-secundario" data-report-listing-toggle>Denunciar anúncio</button>
                 </div>
+                <form class="formulario-anuncio" data-listing-report hidden>
+                    <label for="report-reason">Motivo da denúncia</label>
+                    <select id="report-reason" name="reason" required>
+                        <option value="fraud">Suspeita de fraude</option>
+                        <option value="prohibited">Item ou serviço proibido</option>
+                        <option value="misleading">Informação enganosa</option>
+                        <option value="duplicate">Anúncio duplicado</option>
+                        <option value="other">Outro motivo</option>
+                    </select>
+                    <label for="report-details">Detalhes (opcional)</label>
+                    <textarea id="report-details" name="details" rows="3" maxlength="500"></textarea>
+                    <button type="submit">Enviar denúncia</button>
+                </form>
                 <p class="mensagem-pagina" data-marketplace-message role="status" hidden></p>
                 <div class="acoes-detalhe">
                     <button id="favorito-detalhe" class="favorito-detalhe" type="button" hidden></button>

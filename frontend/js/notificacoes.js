@@ -30,10 +30,10 @@
                 card.append(link);
             } else if (notification.resourceId && notification.resourceType === "listing") {
                 const link = document.createElement("a");
-                link.href = notification.type === "listing_approved"
+                link.href = ["listing_approved", "listing_published"].includes(notification.type)
                     ? `/pages/produto.html?item=${encodeURIComponent(notification.resourceId)}`
                     : "/pages/painel.html";
-                link.textContent = notification.type === "listing_approved"
+                link.textContent = ["listing_approved", "listing_published"].includes(notification.type)
                     ? "Ver anúncio"
                     : "Ver meus anúncios";
                 card.append(link);

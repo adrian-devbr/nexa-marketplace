@@ -121,6 +121,35 @@
                     button.disabled = false;
                 }
             });
+            const reportForm = document.querySelector("[data-listing-report]");
+            const reportToggle = actions.querySelector("[data-report-listing-toggle]");
+            reportToggle.addEventListener("click", () => {
+                reportForm.hidden = !reportForm.hidden;
+            });
+            reportForm.addEventListener("submit", async (event) => {
+                event.preventDefault();
+                const button = reportForm.querySelector('button[type="submit"]');
+                const data = new FormData(reportForm);
+                button.disabled = true;
+                try {
+                    await window.NEXAApi.request(`/listings/${item.id}/reports`, {
+                        method: "POST",
+                        body: {
+                            reason: String(data.get("reason")),
+                            details: String(data.get("details")).trim()
+                        }
+                    });
+                    const confirmation = document.createElement("p");
+                    confirmation.className = "mensagem-pagina";
+                    confirmation.setAttribute("role", "status");
+                    confirmation.textContent = "Denúncia enviada para a equipe de moderação.";
+                    reportForm.replaceChildren(confirmation);
+                } catch (error) {
+                    mensagemErro.textContent = error.message;
+                    mensagemErro.hidden = false;
+                    button.disabled = false;
+                }
+            });
         }
     }
 

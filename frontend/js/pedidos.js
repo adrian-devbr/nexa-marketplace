@@ -3,13 +3,21 @@
     const list = document.querySelector("[data-orders]");
     const errors = document.querySelector("[data-page-error]");
     const labels = {
-        pending: "Pendente",
-        accepted: "Aceito — aguardando pagamento",
+        pending: "Aguardando vendedor",
+        accepted: "Aguardando pagamento",
+        paid: "Pago — aguardando início do vendedor",
         in_progress: "Em andamento",
         ready: "Disponível",
         completed: "Concluído",
         cancelled: "Cancelado",
         rejected: "Recusado"
+    };
+    const paymentLabels = {
+        pending: "Aguardando confirmação",
+        approved: "Confirmado",
+        rejected: "Recusado",
+        cancelled: "Cancelado",
+        refunded: "Estornado"
     };
 
     if (!session) {
@@ -53,12 +61,15 @@
                 title.textContent = payment.listingTitle;
                 const description = document.createElement("p");
                 description.textContent =
-                    `${payment.direction === "purchase" ? "Compra" : "Venda"} · Pedido #${payment.orderNumber} · ${payment.paymentStatus} · ${window.NEXAApi.formatPrice(payment.amount)}`;
+                    `${payment.direction === "purchase" ? "Compra" : "Venda"} · Pedido #${payment.orderNumber} · ${paymentLabels[payment.paymentStatus] ?? payment.paymentStatus} · ${window.NEXAApi.formatPrice(payment.amount)}`;
+                const feeSummary = document.createElement("p");
+                feeSummary.textContent =
+                    `Taxa NEXA: ${window.NEXAApi.formatPrice(payment.platformFee)} · Tarifa Mercado Pago: ${payment.providerFee === null ? payment.paymentStatus === "approved" ? "não informada pelo provedor" : "aguardando confirmação" : window.NEXAApi.formatPrice(payment.providerFee)} · Líquido estimado do vendedor: ${payment.sellerNet === null ? "a confirmar" : window.NEXAApi.formatPrice(payment.sellerNet)}`;
                 const link = document.createElement("a");
                 link.className = "botao-link";
                 link.href = `/pages/pedido.html?id=${encodeURIComponent(payment.orderId)}`;
                 link.textContent = "Ver pedido";
-                row.append(title, description, link);
+                row.append(title, description, feeSummary, link);
                 history.append(row);
             });
         }

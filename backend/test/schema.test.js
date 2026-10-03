@@ -8,7 +8,8 @@ describe("esquema do PostgreSQL", () => {
     it("declara todas as entidades principais do marketplace", () => {
         for (const table of [
             "users", "listings", "blocked_users", "conversations", "messages",
-            "notifications", "orders", "reviews", "payments", "payment_events"
+            "notifications", "platform_fee_tiers", "listing_reports",
+            "orders", "order_status_history", "reviews", "payments", "payment_events"
         ]) {
             assert.match(schema, new RegExp(`CREATE TABLE IF NOT EXISTS ${table} \\(`));
         }
@@ -33,5 +34,18 @@ describe("esquema do PostgreSQL", () => {
         assert.ok(ordersTable);
         assert.match(ordersTable, /unit_price_cents BIGINT NOT NULL/);
         assert.match(ordersTable, /total_cents BIGINT NOT NULL/);
+        assert.match(ordersTable, /platform_fee_cents BIGINT NOT NULL/);
+        assert.match(ordersTable, /seller_net_cents BIGINT/);
+        assert.match(schema, /UPDATE listings SET status = 'published', updated_at = NOW\(\)\s+WHERE status = 'pending'/);
+        assert.match(ordersTable, /'paid'/);
+        assert.match(schema, /CREATE TABLE IF NOT EXISTS order_status_history/);
+        assert.match(schema, /event_number BIGINT GENERATED ALWAYS AS IDENTITY/);
+    });
+
+    it("publica anúncios por padrão e preserva a faixa financeira usada no pedido", () => {
+        assert.match(schema, /status VARCHAR\(12\) NOT NULL DEFAULT 'published'/);
+        assert.match(schema, /INSERT INTO platform_fee_tiers/);
+        assert.match(schema, /platform_fee_rate_basis_points INTEGER NOT NULL/);
+        assert.match(schema, /provider_fee_cents BIGINT/);
     });
 });

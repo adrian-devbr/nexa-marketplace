@@ -52,7 +52,7 @@
                 anuncioEdicao ? `/listings/${anuncioEdicao.id}` : "/listings",
                 { method: anuncioEdicao ? "PUT" : "POST", body }
             );
-            window.location.replace("/pages/painel.html");
+            window.location.replace("/pages/painel.html?publicado=1");
         } catch (error) {
             console.error("Erro ao salvar o anúncio:", error);
             mensagem.textContent = error.message;

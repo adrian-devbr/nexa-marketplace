@@ -2,6 +2,8 @@ import { randomUUID } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
 import { pool } from "../db.js";
+import { calculateFeeCents } from "../fees.js";
+import { canTransitionOrder } from "../order-workflow.js";
 import { requireAuth } from "../auth.js";
 import { asyncRoute, HttpError, notify } from "../errors.js";
 
@@ -9,6 +11,7 @@ const router = Router();
 const statusLabels = {
     pending: "Pendente",
     accepted: "Aceito",
+    paid: "Pago",
     in_progress: "Em andamento",
     ready: "Disponível",
     completed: "Concluído",
@@ -26,7 +29,7 @@ router.post("/", asyncRoute(async (request, response) => {
     try {
         await client.query("BEGIN");
         const listing = await client.query(
-            `SELECT l.id, l.owner_id, l.title, l.price_cents
+            `SELECT l.id, l.owner_id, l.title, l.type, l.price_cents
              FROM listings l JOIN users u ON u.id = l.owner_id
              WHERE l.id = $1 AND l.status = 'published' AND u.blocked_at IS NULL
              FOR UPDATE OF l`,
@@ -38,13 +41,41 @@ router.post("/", asyncRoute(async (request, response) => {
             throw new HttpError(400, "Você não pode fazer um pedido no seu próprio anúncio.");
         }
         const id = randomUUID();
-        const total = item.price_cents * input.quantity;
+        const total = Number(item.price_cents) * input.quantity;
         if (!Number.isSafeInteger(total)) throw new HttpError(400, "Quantidade inválida.");
+        const feeTier = await client.query(
+            `SELECT id, rate_basis_points
+             FROM platform_fee_tiers
+             WHERE min_cents <= $1 AND (max_cents IS NULL OR max_cents >= $1)
+               AND (listing_type IS NULL OR listing_type = $2)
+               AND (seller_id IS NULL OR seller_id = $3)
+               AND (starts_at IS NULL OR starts_at <= NOW())
+               AND (ends_at IS NULL OR ends_at > NOW())
+             ORDER BY (seller_id IS NOT NULL) DESC,
+                      (listing_type IS NOT NULL) DESC,
+                      starts_at DESC NULLS LAST
+             LIMIT 1
+             FOR KEY SHARE`,
+            [total, item.type, item.owner_id]
+        );
+        if (!feeTier.rowCount) {
+            throw new HttpError(503, "Não há uma faixa de taxa configurada para este pedido.");
+        }
+        const platformFeeRate = Number(feeTier.rows[0].rate_basis_points);
+        const platformFee = calculateFeeCents(total, platformFeeRate);
         await client.query(
             `INSERT INTO orders
-                (id, listing_id, buyer_id, seller_id, quantity, unit_price_cents, total_cents)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [id, item.id, request.userId, item.owner_id, input.quantity, item.price_cents, total]
+                (id, listing_id, buyer_id, seller_id, quantity, unit_price_cents,
+                 total_cents, fee_tier_id, platform_fee_rate_basis_points,
+                 platform_fee_cents, seller_net_cents)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NULL)`,
+            [id, item.id, request.userId, item.owner_id, input.quantity,
+                item.price_cents, total, feeTier.rows[0].id, platformFeeRate, platformFee]
+        );
+        await client.query(
+            `INSERT INTO order_status_history (id, order_id, status, actor_id, details)
+             VALUES ($1, $2, 'pending', $3, 'Pedido criado; aguardando resposta do vendedor.')`,
+            [randomUUID(), id, request.userId]
         );
         await notify(client, {
             userId: item.owner_id, type: "new_order", title: "Novo pedido recebido",
@@ -53,7 +84,12 @@ router.post("/", asyncRoute(async (request, response) => {
         });
         await client.query("COMMIT");
         response.status(201).json({
-            order: { id, status: "pending", quantity: input.quantity, totalCents: total }
+            order: {
+                id, status: "pending", quantity: input.quantity, totalCents: total,
+                platformFeeCents: platformFee,
+                platformFeeRateBasisPoints: platformFeeRate,
+                sellerNetBeforeProviderFeeCents: total - platformFee
+            }
         });
     } catch (error) {
         await client.query("ROLLBACK");
@@ -69,6 +105,10 @@ router.get("/", asyncRoute(async (request, response) => {
                 o.unit_price_cents / 100.0 AS "unitPrice",
                 o.total_cents / 100.0 AS total, o.created_at AS "createdAt",
                 l.id AS "listingId", l.title AS "listingTitle",
+                o.platform_fee_rate_basis_points / 100.0 AS "platformFeeRate",
+                o.platform_fee_cents / 100.0 AS "platformFee",
+                o.provider_fee_cents / 100.0 AS "providerFee",
+                o.seller_net_cents / 100.0 AS "sellerNet",
                 buyer.id = $1 AS "isBuyer",
                 other.id AS "otherUserId", other.name AS "otherUserName",
                 p.status AS "paymentStatus"
@@ -84,6 +124,7 @@ router.get("/", asyncRoute(async (request, response) => {
 }));
 
 router.get("/:id", asyncRoute(async (request, response) => {
+    z.string().uuid().parse(request.params.id);
     const result = await pool.query(
         `SELECT o.id, o.order_number AS "orderNumber", o.status, o.quantity,
                 o.unit_price_cents / 100.0 AS "unitPrice",
@@ -91,6 +132,10 @@ router.get("/:id", asyncRoute(async (request, response) => {
                 o.updated_at AS "updatedAt", o.buyer_id AS "buyerId",
                 o.seller_id AS "sellerId", l.id AS "listingId",
                 l.title AS "listingTitle", l.image_url AS "listingImage",
+                o.platform_fee_rate_basis_points / 100.0 AS "platformFeeRate",
+                o.platform_fee_cents / 100.0 AS "platformFee",
+                o.provider_fee_cents / 100.0 AS "providerFee",
+                o.seller_net_cents / 100.0 AS "sellerNet",
                 buyer.name AS "buyerName", seller.name AS "sellerName",
                 p.id AS "paymentId", p.status AS "paymentStatus",
                 p.checkout_url AS "checkoutUrl",
@@ -109,7 +154,24 @@ router.get("/:id", asyncRoute(async (request, response) => {
     response.json({ order: result.rows[0] });
 }));
 
+router.get("/:id/history", asyncRoute(async (request, response) => {
+    z.string().uuid().parse(request.params.id);
+    const order = await pool.query(
+        "SELECT id FROM orders WHERE id = $1 AND (buyer_id = $2 OR seller_id = $2)",
+        [request.params.id, request.userId]
+    );
+    if (!order.rowCount) throw new HttpError(404, "Pedido não encontrado.");
+    const history = await pool.query(
+        `SELECT status, details, created_at AS "createdAt"
+         FROM order_status_history WHERE order_id = $1
+         ORDER BY created_at ASC, event_number ASC`,
+        [request.params.id]
+    );
+    response.json({ history: history.rows });
+}));
+
 router.patch("/:id/status", asyncRoute(async (request, response) => {
+    z.string().uuid().parse(request.params.id);
     const input = z.object({
         status: z.enum(["accepted", "in_progress", "ready", "completed", "cancelled", "rejected"])
     }).parse(request.body);
@@ -127,31 +189,55 @@ router.patch("/:id/status", asyncRoute(async (request, response) => {
         if (!current.rowCount) throw new HttpError(404, "Pedido não encontrado.");
         const order = current.rows[0];
         const seller = order.seller_id === request.userId;
-        const transitions = seller
-            ? { pending: ["accepted", "rejected"], accepted: ["in_progress"], in_progress: ["ready"] }
-            : { pending: ["cancelled"], accepted: ["cancelled"], ready: ["completed"] };
-        if (!transitions[order.status]?.includes(input.status)) {
+        if (!canTransitionOrder({
+            isSeller: seller,
+            currentStatus: order.status,
+            nextStatus: input.status,
+            paymentStatus: order.payment_status
+        })) {
             throw new HttpError(409, "Essa alteração não é permitida para este pedido.");
-        }
-        if (!seller && order.status === "accepted" && input.status === "cancelled" &&
-            order.payment_status === "pending") {
-            throw new HttpError(409, "Este pedido tem uma cobrança ativa. Conclua ou aguarde a atualização do pagamento.");
-        }
-        if (seller && ["accepted", "in_progress", "ready"].includes(input.status) &&
-            order.payment_status !== "approved") {
-            throw new HttpError(409, "O pedido só pode avançar depois da confirmação do pagamento.");
         }
         const result = await client.query(
             `UPDATE orders SET status = $2, updated_at = NOW()
              WHERE id = $1 RETURNING id, status`,
             [order.id, input.status]
         );
+        if (input.status === "accepted") {
+            await client.query(
+                `INSERT INTO order_status_history (id, order_id, status, actor_id, details)
+                 VALUES
+                    ($1, $2, 'accepted', $3, 'Vendedor aceitou o pedido.'),
+                    ($4, $2, 'awaiting_payment', $3, 'Aguardando o comprador pagar pelo Mercado Pago.')`,
+                [randomUUID(), order.id, request.userId, randomUUID()]
+            );
+        } else {
+            const details = input.status === "rejected"
+                ? "O vendedor recusou o pedido."
+                : input.status === "cancelled"
+                    ? "O pedido foi cancelado."
+                    : input.status === "in_progress"
+                        ? "O vendedor iniciou o atendimento após a confirmação do pagamento."
+                        : input.status === "ready"
+                            ? "O vendedor marcou o pedido como disponível."
+                            : "O pedido foi concluído.";
+            await client.query(
+                `INSERT INTO order_status_history (id, order_id, status, actor_id, details)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [randomUUID(), order.id, input.status, request.userId, details]
+            );
+        }
         const recipientId = seller ? order.buyer_id : order.seller_id;
         const label = statusLabels[input.status];
         await notify(client, {
             userId: recipientId, type: "order_updated",
-            title: `Pedido ${label.toLocaleLowerCase("pt-BR")}`,
-            body: `O pedido de “${order.title}” foi atualizado para ${label.toLocaleLowerCase("pt-BR")}.`,
+            title: input.status === "accepted" ? "Pedido aceito — aguardando pagamento" : `Pedido ${label.toLocaleLowerCase("pt-BR")}`,
+            body: input.status === "accepted"
+                ? `O vendedor aceitou “${order.title}”. Agora você pode pagar pelo Mercado Pago.`
+                : input.status === "rejected"
+                    ? `O vendedor recusou o pedido de “${order.title}”. Nenhuma cobrança foi feita.`
+                    : input.status === "in_progress"
+                        ? `O vendedor iniciou o atendimento do pedido “${order.title}”.`
+                        : `O pedido de “${order.title}” foi atualizado para ${label.toLocaleLowerCase("pt-BR")}.`,
             resourceType: "order", resourceId: order.id
         });
         await client.query("COMMIT");
@@ -165,6 +251,7 @@ router.patch("/:id/status", asyncRoute(async (request, response) => {
 }));
 
 router.post("/:id/reviews", asyncRoute(async (request, response) => {
+    z.string().uuid().parse(request.params.id);
     const input = z.object({
         rating: z.number().int().min(1).max(5),
         comment: z.string().trim().max(1000).default("")
