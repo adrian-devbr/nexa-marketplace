@@ -16,6 +16,10 @@ import paymentRoutes, { paymentWebhookRouter } from "./routes/payments.js";
 import userRoutes from "./routes/users.js";
 import adminRoutes from "./routes/admin.js";
 
+if (!process.env.APP_BASE_URL && process.env.RENDER_EXTERNAL_URL) {
+    process.env.APP_BASE_URL = process.env.RENDER_EXTERNAL_URL;
+}
+
 const requiredConfig = ["DATABASE_URL", "JWT_SECRET", "APP_BASE_URL"];
 for (const name of requiredConfig) {
     if (!process.env[name]) {

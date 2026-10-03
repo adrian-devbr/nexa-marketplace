@@ -86,6 +86,40 @@ Os valores aplicados ficam registrados no pedido e não mudam quando uma faixa
 for alterada depois. As faixas iniciais são 10% até R$ 50, 8% até R$ 200, 6%
 até R$ 500, 5% até R$ 1.000 e 4% acima disso.
 
+## Staging no Render
+
+O arquivo `render.yaml` configura um web service do NEXA e um PostgreSQL
+separado, ambos no plano gratuito e na mesma região. O serviço executa
+`backend/db/schema.sql` ao iniciar e publica também a interface web. O Render
+usa o `DATABASE_URL` interno do banco e define `APP_BASE_URL` pela URL HTTPS
+atribuída ao serviço. A chave `JWT_SECRET` é gerada pelo Render; informe
+`ADMIN_EMAILS` no assistente do Blueprint para poder criar a conta de
+administrador de staging. `NODE_ENV=production` ativa cookies seguros e HTTPS;
+isso não transforma o staging em lançamento público. O modo `DATABASE_SSL_MODE`
+`require` mantém TLS no link privado com o certificado interno do Render.
+
+Para iniciar, envie o `render.yaml` ao GitHub, entre no Render, escolha **New →
+Blueprint**, conecte `adrian-devbr/nexa-marketplace` e selecione a branch
+`main`. Não copie `backend/.env` para o painel nem para o repositório. As
+variáveis e credenciais ficam no ambiente do Render. O Blueprint ativa
+`MP_ALLOW_TEST_PAYMENTS`, mas não contém token ou segredo do Mercado Pago; sem
+credenciais de teste o checkout permanece indisponível. Se for habilitá-lo,
+adicione no painel do Render somente um token `TEST-` e o segredo do webhook de
+teste. Credenciais `APP_USR-` continuam bloqueadas.
+
+**Limites importantes do plano gratuito:** o web service pode dormir após 15
+minutos sem tráfego e levar cerca de um minuto para acordar. O PostgreSQL Free
+tem 1 GB e expira 30 dias após a criação; após o período de recuperação de 14
+dias, o Render apaga o banco e os dados. Exporte qualquer dado de teste que
+precise preservar antes da expiração. Esse staging é temporário, não é produção,
+e não deve receber dados pessoais ou pagamentos reais.
+
+Valide primeiro `https://<serviço>.onrender.com/api/health` e depois percorra
+cadastro/login, anúncios, favoritos, conversas/mensagens, notificações,
+pedidos, avaliações e taxas com contas de teste. Só depois de verificar os
+fluxos e decidir a política de retenção dos dados será adequado planejar a
+infraestrutura de produção.
+
 ## Testes
 
 ```powershell

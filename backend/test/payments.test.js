@@ -9,7 +9,8 @@ import {
 const originalEnvironment = {
     secret: process.env.MP_WEBHOOK_SECRET,
     accessToken: process.env.MP_ACCESS_TOKEN,
-    nodeEnv: process.env.NODE_ENV
+    nodeEnv: process.env.NODE_ENV,
+    allowTestPayments: process.env.MP_ALLOW_TEST_PAYMENTS
 };
 
 afterEach(() => {
@@ -19,6 +20,8 @@ afterEach(() => {
     else process.env.MP_ACCESS_TOKEN = originalEnvironment.accessToken;
     if (originalEnvironment.nodeEnv === undefined) delete process.env.NODE_ENV;
     else process.env.NODE_ENV = originalEnvironment.nodeEnv;
+    if (originalEnvironment.allowTestPayments === undefined) delete process.env.MP_ALLOW_TEST_PAYMENTS;
+    else process.env.MP_ALLOW_TEST_PAYMENTS = originalEnvironment.allowTestPayments;
 });
 
 describe("validação dos pagamentos", () => {
@@ -66,11 +69,15 @@ describe("validação dos pagamentos", () => {
         assert.throws(requireSafeProviderToken, /Configure MP_ACCESS_TOKEN/);
     });
 
-    it("bloqueia pagamentos reais enquanto o repasse de marketplace não estiver integrado", () => {
+    it("permite credenciais de teste apenas com ativação explícita no staging", () => {
         process.env.NODE_ENV = "production";
         process.env.MP_ACCESS_TOKEN = "TEST-token";
-        assert.throws(requireSafeProviderToken, { status: 503 });
+        delete process.env.MP_ALLOW_TEST_PAYMENTS;
+        assert.throws(requireSafeProviderToken, /MP_ALLOW_TEST_PAYMENTS/);
+        process.env.MP_ALLOW_TEST_PAYMENTS = "true";
+        assert.doesNotThrow(requireSafeProviderToken);
+
         process.env.MP_ACCESS_TOKEN = "APP_USR-production-token";
-        assert.throws(requireSafeProviderToken, /repasse ao vendedor/);
+        assert.throws(requireSafeProviderToken, /somente credenciais de teste/);
     });
 });

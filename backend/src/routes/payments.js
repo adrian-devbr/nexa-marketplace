@@ -44,10 +44,6 @@ async function requestProvider(url, options) {
 }
 
 export function requireSafeProviderToken() {
-    if (process.env.NODE_ENV === "production") {
-        throw new HttpError(503,
-            "Pagamentos reais permanecem bloqueados até a integração e validação do marketplace com divisão e repasse ao vendedor.");
-    }
     const token = process.env.MP_ACCESS_TOKEN;
     if (!token) {
         throw new HttpError(503, "Configure MP_ACCESS_TOKEN para habilitar pagamentos.");
@@ -55,7 +51,12 @@ export function requireSafeProviderToken() {
     const isTestToken = token.startsWith("TEST-");
     if (!isTestToken) {
         throw new HttpError(503,
-            "O ambiente local aceita somente credenciais de teste TEST- do Mercado Pago.");
+            "Este ambiente aceita somente credenciais de teste TEST- do Mercado Pago.");
+    }
+    if (process.env.NODE_ENV === "production" &&
+        process.env.MP_ALLOW_TEST_PAYMENTS !== "true") {
+        throw new HttpError(503,
+            "Ative MP_ALLOW_TEST_PAYMENTS somente no staging para habilitar pagamentos de teste. Pagamentos reais permanecem bloqueados até a integração de marketplace e repasses.");
     }
 }
 
